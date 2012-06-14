@@ -1,0 +1,158 @@
+.nolist
+#include "ti83plus.inc"
+#define	ProgStart	$9D95
+.list
+
+.org    ProgStart - 2
+	.db    t2ByteTok, tAsmCmp
+	b_call(_RunIndicOff)
+	b_call(_ClrLCDFull)
+	
+	LD HL,3
+	LD (posx),HL
+	LD (posy),HL
+	
+	LD HL,15
+	LD (boardwid),HL
+	LD HL,6
+	LD (boardhei),HL
+	
+	LD HL,0
+	LD (boardwidmin),HL
+	LD (boardheimin),HL
+	
+	JP inputloop
+	ret
+	
+inputloop:
+	call printpos
+	b_call(_GetKey)
+	
+	CP kUp
+	JP Z,movdown
+	CP kDown
+	JP Z,movup
+	CP kLeft
+	JP Z,movleft
+	CP kRight
+	JP Z,movright
+	CP kClear
+	JP Z,endloop
+	
+	JP inputloop
+	
+movup:
+	LD HL,(posy)
+	INC HL
+	LD (posy), HL
+	
+	LD A,(boardhei)
+	LD C,A
+	INC C
+	LD A,(posy)
+	CP C
+	JP Z,wrapup
+	
+	JP inputloop
+	
+wrapup:
+	LD HL,(boardheimin)
+	LD (posy),HL
+	JP inputloop
+	
+movdown:
+	LD HL,(posy)
+	DEC HL
+	LD (posy), HL
+	
+	LD A,(boardheimin)
+	LD C,A
+	DEC C
+	LD A,(posy)
+	CP C
+	JP Z,wrapdown
+	
+	JP inputloop
+	
+wrapdown:
+	LD HL,(boardhei)
+	LD (posy),HL
+	JP inputloop
+	
+movleft:
+	LD HL,(posx)
+	DEC HL
+	LD (posx), HL
+	
+	LD A,(boardwidmin)
+	LD C,A
+	DEC C
+	LD A,(posx)
+	CP C
+	JP Z,wrapleft
+	
+	JP inputloop
+	
+wrapleft:
+	LD HL,(boardwid)
+	LD (posx),HL
+	JP inputloop
+	
+movright:
+	LD HL,(posx)
+	INC HL
+	LD (posx), HL
+	
+	LD A,(boardwid)
+	LD C,A
+	INC C
+	LD A,(posx)
+	CP C
+	JP Z,wrapright
+	
+	JP inputloop
+	
+wrapright:
+	LD HL,(boardwidmin)
+	LD (posx),HL
+	JP inputloop
+	
+printpos:
+	b_call(_ClrLCDFull)
+	
+	LD A,0
+	LD (CurRow),A
+	LD A,0
+	LD (CurCol),A
+	
+	LD HL,(posx)
+	b_call(_DispHL)
+	
+	LD A, ','
+	b_call(_PutC)
+	
+	LD HL, (posy)
+	b_call(_DispHL)
+	
+	LD A,(posx)
+	LD (CurCol),A
+	LD A,(posy)
+	LD (CurRow),A
+	LD A, '@'
+	b_call(_PutC)
+	ret
+	
+endloop:
+	ret
+
+;manually allocate 16bit vars
+;16bit -> A autoconvert, else (16bit->BC truncate B)
+posx	.EQU	AppBackUpScreen
+posy	.EQU	AppBackUpScreen+16
+boardwid	.EQU	AppBackUpScreen+32
+boardhei	.EQU	AppBackUpScreen+48
+boardwidmin	.EQU	AppBackUpScreen+64
+boardheimin .EQU	AppBackUpScreen+80
+	
+.end
+.end

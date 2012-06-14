@@ -1,0 +1,32 @@
+.nolist
+#include "ti83plus.inc"
+#define	ProgStart	$9D95
+.list
+.org    ProgStart - 2
+	.db    t2ByteTok, tAsmCmp
+	
+	ld A,5
+    LD     (CurRow), A
+	ld A, 6
+	ld (CurCol),A
+	
+	ld A,100
+	ld B,95
+	add A,B
+	
+	cp 195
+	jp Z,test
+	cp 200
+	jp Z,test2
+	ret
+
+test:
+	ld	A, 'A'
+	b_call(_PutC)
+	ret
+test2:
+	ld	B, 'B'
+	b_call(_PutC)
+	ret
+.end
+.end

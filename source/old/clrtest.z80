@@ -1,0 +1,12 @@
+.nolist
+    #include    "ti83plus.inc"
+	#define	ProgStart	$9D95
+.list
+.org    ProgStart
+.db    t2ByteTok, tAsmCmp
+	b_call(_HomeUp)
+	b_call(_ClrLCDFull)
+	b_call(_NewLine)
+	ret
+.end
+.end

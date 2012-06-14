@@ -1,0 +1,29 @@
+.nolist
+#include "ti83plus.inc"
+#include "CLib.inc"
+#define	ProgStart	$9D95
+.list
+
+.org    ProgStart - 2
+	.db    t2ByteTok, tAsmCmp
+	
+	alloc_init()
+	alloc_var(100)
+	ld (var1),HL
+	
+	alloc_var(100)
+	ld (var2),HL
+	
+	
+	ret
+	
+print_hl:
+	b_call(_DispHL)
+	b_call(_NewLine)
+	ret
+	
+var1: .db $00
+var2: .db $00
+
+.end
+.end

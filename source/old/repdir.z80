@@ -1,0 +1,60 @@
+.nolist
+#include "ti83plus.inc"
+#define	ProgStart	$9D95
+.list
+
+.org    ProgStart - 2
+	.db    t2ByteTok, tAsmCmp
+	LD D,1
+	LD H,1
+    LD A, 0
+Do:					;loop
+    INC	A
+	LD B,A
+	
+	LD A,D
+	LD (CurRow),A
+	
+	LD A,H
+	LD (CurCol),A
+	
+	inc D
+	inc H
+	
+	LD A,D
+	CALL Print
+	
+	LD A,B
+    CP	7
+    JR	NZ, Do		;end loop
+	
+	b_call(_NewLine)
+	
+	LD HL, 99
+	LD (tmp),HL
+	
+	LD A,(tmp)
+	b_call(_DispHL)
+	b_call(_NewLine)
+	
+	LD HL, 100
+	LD (tmp2),HL
+	
+	LD A,(tmp2)
+	b_call(_DispHL)
+	b_call(_NewLine)
+	
+	ret
+	
+Print:
+	LD C,63
+	add A,C
+	b_call(_PutC)
+	ret
+	
+tmp: .db 9
+tmp2: .db 9
+	
+
+.end
+.end

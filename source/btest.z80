@@ -1,0 +1,55 @@
+.nolist
+#include "ti83plus.inc"
+
+#define	ProgStart	$9D95
+.list
+
+.org    ProgStart - 2
+	.db    t2ByteTok, tAsmCmp
+	LD C,0
+initloop:	
+	LD E,C
+	PUSH DE
+	LD H,0
+	LD L,C
+	LD BC,elem_size
+	call mult16
+	LD BC,array_base
+	ADD HL,BC
+	POP DE
+	LD C,E
+	LD (HL),C
+	
+	INC C
+	
+	LD A,C
+	CP array_size
+	JP C,initloop
+	
+	LD A,0
+readloop:
+	push AF
+	LD H,0
+	LD L,A
+	LD BC,elem_size
+	call mult16
+	LD BC,array_base
+	ADD HL,BC
+	LD A,(HL)
+	b_call(_PutC)
+	b_call(_NewLine)
+	pop AF
+	
+	INC A
+	CP array_size
+	JP C,readloop
+	ret
+
+#include "CLib.inc"
+
+array_base = AppBackUpScreen
+elem_size = 1
+array_size = 99
+
+.end
+.end
