@@ -1,0 +1,82 @@
+MirageOS 1.2 (May 12th, 2004)
+by Dan Englender and Jason Kovacs
+
+Thank you for downloading the MirageOS shell for the TI-83 Plus and TI-84 Plus.
+
+General info is available at:	www.detachedsolutions.com/mirageos/
+The User Manual is available at:www.detachedsolutions.com/mirageos/manual/
+For installation help goto: 	www.detachedsolutions.com/mirageos/manual/install.php
+Developer information is at: 	www.detachedsolutions.com/mirageos/develop/
+
+Please read through the online documentation and user manual before running MirageOS.
+Any questions or comments can be sent to: mirage@detachedsolutions.com
+
+List of changes since version 1.1:
+Problem/Bug Fixes:
+ - BASIC programs work on all hardware/operating system combinations
+ - Folder size display can be larger than 65535 bytes
+ - Number of programs wont overflow past 127
+ - Key hook doesn't destroy OP1
+ - Fixed USB interrupt bug on 84 Plus
+ - Fixed potential bug with on+del
+ - Doesn't detect programs ! or #
+ - can APD after link transmission failure
+ - Free archive display large enough to display SE free memory
+ - prgm token is displayed properly in BASIC program descriptions
+ - Turning off calculator works better on SE
+ - Web address points to the right place
+ - Other misc fixes
+
+
+New Additions/Changes:
+ - Sorting is much faster
+ - Smart writeback only writes back to archive if programs are modified
+ - New on+^ tasker key to immediately quit without writeback
+ - Some functions run at 15 mhz on capable calculators.
+ - Can cancel rename/new folder prompts
+ - 82 emulation removed
+
+List of changes since version 1.0:
+
+Problem/Bug Fixes:
+ - No longer crashes at the Graph Screen, System Key Hooks fixed.
+ - Archive/Unarchive Programs works under Low RAM/ROM conditions.
+ - Program Sorting works correctly for two progs of the same Name.
+ - BASIC programs run correctly (Text before Input, Menus, etc.)
+ - Alpha+ON Key Hook Fixed, No longer messes up the calculator
+   when the Link Cable is inserted during this Powerdown method.
+ - Linking and Transferring of programs is fixed.
+ - Pressing ON to Break during BASIC menus no longer has problems.
+ - TI-82 Emulation improved, and an Emulation Loader Bug is fixed.
+ - Hidden programs no longer mess up when a folder is deleted.
+ - Auto-Powerdown (APD) fixed in Mirage programs that use APD.
+
+New Additions/Changes:
+ - All Sort methods except sorting by Program Name were removed.
+ - A new function to "Hide All" programs has been implemented.
+ - Rearranged contents of the Function Bar in the Program Manager:
+   1.) The Sort menu is now called "Actn" (meaning Action), which
+   contains the two functions to Sort Folders & Move All Programs.
+   2.) The Info menu for programs now has the "All" selection be
+   used for the Hide All function.
+ - Shortcut Keys were added to the Program Manager for easy access
+   to several of the functions and the keypresses are as follows:
+   DEL = Delete Program/Folder, MATH = New Folder, APPS = Rename
+   Program/Folder, PRGM = Hide All, VARS = FreeRAM/ROM Display,
+   X-1 = Sort Folder, SIN = Archive Program, COS = Hide Program,
+   TAN = Lock/UnLock Program, STO = Move Program/Move All Programs.
+ - Several of these functions can be accessed from the Folders Menu
+   now, when using another GUI.
+ - The input routine for Program and Folder names has been changed
+   to use the ALPHA key to toggle between Letters and Numbers, as
+   opposed to the previous usage of the ON key to switch modes.
+ - Key Hooks are not active on the Graph Screen, such as Alpha+ON,
+   Alpha+APPS, and Quick Key Repeat, but Protecting the Memory Menu
+   still functions correctly from any place in the calculator.
+ - Sorting Message is now displayed on the screen when the shell
+   is sorting programs. Sometimes this could take a while, and we
+   don't want users to think their calculator crashed when starting
+   MirageOS or sorting programs manually from the Program Manager.
+
+ * Copyright (c) 2000-2004 -- Detached Solutions (www.detachedsolution.com)
+

@@ -1,0 +1,23 @@
+.nolist
+#include "ti83plus.inc"
+
+#define	ProgStart	$9D95
+.list
+
+.org    ProgStart - 2
+	.db    t2ByteTok, tAsmCmp
+	LD DE,20
+	LD A,5
+	call fmult
+	push DE
+	b_call(_DispHL)
+	POP DE
+	LD H,D
+	LD L,E
+	b_call(_DispHL)
+	ret
+	
+#include "CLib.inc"	
+
+.end
+.end

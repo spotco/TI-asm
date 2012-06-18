@@ -46,3 +46,25 @@ endmult16:
 	POP BC
 	POP DE
 	ret
+
+;HL = DE * A
+fmult:
+	PUSH AF
+	PUSH BC
+	PUSH DE
+	LD HL,0
+	LD B,8
+_loop:
+	SRL A
+	JR NC,_skip
+	ADD HL,DE
+_skip:
+	SLA E
+	SLA D
+	CP 0
+	JR NZ,_loop
+	POP DE
+	POP BC
+	POP AF
+	ret
+	

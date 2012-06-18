@@ -1,0 +1,3289 @@
+.NOLIST
+
+#define equ .equ
+#define EQU .equ
+#define end .end
+
+#include	"ti83plus.inc"
+#include	"mirage.inc"
+.LIST
+
+#DEFINE kDown   01h
+#DEFINE kLeft   02h
+#DEFINE kRight  03h
+#DEFINE kUp     04h
+#DEFINE kEnter  09h
+#DEFINE kMode   37h
+#DEFINE kDel    38h
+#DEFINE kYEq    35h
+#DEFINE k2nd    36h
+#DEFINE kAlpha  30h
+
+#define xmm     savesscreen	     ; Mega Man's x-coord
+#define ymm     savesscreen+2   ; Mega Man's y-coord
+#define jrem    savesscreen+3   ; remebers the y-coord where the jump started
+#define jchk    savesscreen+4   ; check for jump: 0=no jump 1=jump up 2=jump down
+#define wchk    savesscreen+5   ; check if ok to shoot again: 0=yes >0=no
+#define dir     savesscreen+6   ; direction Mega Man is facing: 0=left 1=right
+#define x2      savesscreen+7   ; x-coord for many different things
+#define y2      savesscreen+8   ; y-coord for many different things
+#define xb      savesscreen+9   ; x-coord for boss
+#define yb      savesscreen+10  ; y-coord for boss
+#define wx1     savesscreen+11  ; x-coord for 1st shot
+#define wy1     savesscreen+12  ; y-coord for 1st shot
+#define wx2     savesscreen+13  ; x-coord for 2nd shot
+#define wy2     savesscreen+14  ; y-coord for 2nd shot
+#define wx3     savesscreen+15  ; x-coord for 3rd shot
+#define wy3     savesscreen+16  ; y-coord for 3rd shot
+#define bdir    savesscreen+17  ; direction of boss: 0=left 1=right
+#define wdir1   savesscreen+18  ; direction of 1st shot: 0=left 1=right
+#define wdir2   savesscreen+19  ; direction of 2nd shot: 0=left 1=right
+#define wdir3   savesscreen+20  ; direction of 3rd shot: 0=left 1=right
+#define wchk1   savesscreen+21  ; check if bullet #1 is still on screen: 0=no 1=yes
+#define wchk2   savesscreen+22  ; check if bullet #2 is still on screen: 0=no 1=yes
+#define wchk3   savesscreen+23  ; check if bullet #3 is still on screen: 0=no 1=yes
+#define curlvl  savesscreen+24  ; pointer to the beginning of the level data
+#define feet    savesscreen+26  ; check for which running sprite to use: 0 or 1
+#define xscr    savesscreen+27  ; x scroller
+#define tempscr savesscreen+29  ; amount scrolled within incomplete block
+#define schk    savesscreen+31  ; scroll check: 0=no 1=yes
+#define boss    savesscreen+33  ; which boss u will face: 1 2 3=top row 4 5 6=middle row 7 8 9=bottom row
+#define wpnspr  savesscreen+34  ; current weapon sprite
+#define smlspr  savesscreen+36  ; current 8x8 sprite
+#define curpic  savesscreen+38  ; current pic to draw
+#define bosspic savesscreen+40  ; current boss sprite
+#define death   savesscreen+42  ; check if dead: 0=no 1=yes
+#define win     savesscreen+44  ; check if level is completed: 0=no 1=yes
+#define xe      savesscreen+45  ; x-coord for enemy
+#define ye      savesscreen+46  ; y-coord for enemy
+#define edir    savesscreen+47  ; direction enemy is travelling
+#define echk    savesscreen+48  ; check for onscreen enemy: 0=no 1=i 2=t 3=dead
+#define enspr   savesscreen+49  ; current enemy sprite
+#define ecount  savesscreen+51  ; counts how many pixels enemy has moved (32 pixels allowed)
+#define ecount2 savesscreen+52  ; counts how many pixels have scrolled since enemy appeared
+#define bchk    savesscreen+53  ; checks for boss: 0=no 1=yes
+#define bwx     savesscreen+54  ; x-coord of boss's shot
+#define bwspr   savesscreen+55  ; sprite for boss's shot
+#define bwchk   savesscreen+57  ; check for boss's shot onscreen
+#define bjchk   savesscreen+58  ; check for boss's jump: 0=no jump 1=jump down 2=jump up
+#define lvldone savesscreen+59  ; checks levels completed: 0 1 2=top row 3 _ 4=middle row 5 6 7=bottom row
+#define maxjh   savesscreen+60  ; stores max jump height for use with make shift gravity
+#define tankpw  savesscreen+69  ; checks for password dots corresponding to energy tanks
+#define lives   savesscreen+70  ; the number of lives you have
+#define tanks   savesscreen+71  ; the number of energy tanks you have
+#define remlvl  savesscreen+72  ; remembers which level you were on before the special boss screens
+#define wpn     savesscreen+74  ; which weapon you are using: 1=an...5=??...9=mi
+#define wrem1   savesscreen+75  ; remembers x-coord where short-range bullet #1 must stop
+#define wrem2   savesscreen+76  ; remembers x-coord where short-range bullet #2 must stop
+#define wrem3   savesscreen+77  ; remembers x-coord where short-range bullet #3 must stop
+#define bcount  savesscreen+78  ; special counting variable used for final bosses
+#define item    savesscreen+79  ; check for item in level: 0=no 1=yes 2=got
+#define enp     savesscreen+80  ; life energy
+#define enan    savesscreen+81  ; energy for anchor toss
+#define enma    savesscreen+82  ; energy for stamp throw
+#define enmd    savesscreen+83  ; energy for swearing scream
+#define endo    savesscreen+84  ; energy for splinter shot
+#define ense    savesscreen+85  ; energy for top secret weapon
+#define enpo    savesscreen+86  ; energy for badge boomerang
+#define enfr    savesscreen+87  ; energy for zit shield
+#define ensa    savesscreen+88  ; energy for bill charge
+#define enmi    savesscreen+89  ; energy for milk bubble
+#define enwpn   savesscreen+90  ; energy for current weapon
+#define ene     savesscreen+91  ; energy for enemy
+#define enb     savesscreen+92  ; energy for boss
+#define hchk    savesscreen+93  ; check if you've been hit: 0=no 1=yes
+#define stack   savesscreen+93  ; save stack for debugging (?)
+
+	.org	$9d93				;Origin (set back two to account for AsmPrgm)
+	.db	$BB,$6D				;Compiled AsmPrgm token
+	ret					;So TIOS wont run the program
+	.db	1				;Identifier as MirageOS program
+	.db %00000000,%00000000
+	.db %00000000,%00000000
+	.db %00001100,%00000000
+	.db %00010010,%00000000
+	.db %00001100,%00000000
+	.db %00011111,%00000000
+	.db %01100001,%10000000
+	.db %01100001,%01000000
+	.db %10011110,%00000000
+	.db %00011011,%00000011
+	.db %00110001,%11000100
+	.db %00010000,%00001011
+	.db %00001000,%00000100
+	.db %11111111,%00011111
+	.db %00000001,%00010000
+Description:	.db	"Mario Demo 83+",0	
+prog_start:
+	bcall(_clrlcdfull)
+	bcall(_grbufclr)
+	xor a		   ; no levels completed
+	ld (lvldone),a
+	ld (tanks),a    ; 0 energy tanks
+	inc a
+	ld (tankpw),a   ; 0 energy tanks (for password system)
+	inc a
+	inc a
+	ld (lives),a    ; 3 lives
+	ld a,17
+	ld (x2),a
+	ld a,43
+	ld (y2),a
+	ld hl,pwdot
+	ld (smlspr),hl
+	ld a,(y2)
+	cp 43
+	jr z,cb_init
+	cp kMode		; exit game if MODE was pressed on enter password screen
+	ret z
+cb_init:
+	ld a,33
+	ld (x2),a
+	ld a,22
+	ld (y2),a
+	bcall(_clrlcdfull)
+boss_loop:
+	call xor_corners
+	call fastcopys
+	call xor_corners
+	jr find_boss
+	bcall(_getcsc)      ; clear the keybuffer
+	bcall(_grbufclr)
+	bcall(_clrlcdfull)
+	ret
+find_boss:
+	ld a,(y2)
+	cp 1
+	jr z,row1
+	cp 22
+	jr z,row2
+	ld a,7
+	jr found_row
+row2:
+	ld a,4
+	jr found_row
+row1:
+	ld a,1
+found_row:
+	ld (boss),a
+	ld a,(x2)
+	cp 64
+	jr z,add2
+	cp 33
+	jr nz,add0
+	ld a,(boss)
+	inc a
+	jr add_done
+add0:
+	ld a,(boss)
+	jr add_done
+add2:
+	ld a,(boss)
+	add a,2
+add_done:
+	ld (boss),a
+	ld a,44
+	ld (xb),a
+	ld a,27
+	ld (yb),a
+	ld a,(boss)
+	cp 1
+	jr z,an_init
+an_init:
+	ld a,(lvldone)
+	bit 0,a
+	jp c,boss_loop
+	ld hl,ansl
+	call disp_boss
+	ld hl,wpan
+	ld (bwspr),hl
+	ld a,54
+	ld hl,a_n
+	call centertext
+	ld hl,lvlan
+intro_done:
+	ld (curlvl),hl  ; remember the start of the level
+	ld (remlvl),hl
+	call delay
+	bcall(_clrlcdfull)
+	bcall(_grbufclr)
+	call wpn_fill
+part1_init:
+	call init_vars
+	ld a,44	 ; initialize some variables
+	ld (ymm),a
+	xor a
+	ld (jchk),a
+	ld (bchk),a
+	ld (wpn),a
+	inc a
+	ld (dir),a
+	ld (schk),a
+	ld hl,wpp
+	ld (wpnspr),hl
+	call ShowLevel
+	call main_loop
+	bcall(_getcsc)	      ; clear the keybuffer
+	bcall(_grbufclr)
+	bcall(_clrlcdfull)
+	ld a,(death)    ; check if died
+	or a
+	jp nz,lost_life
+	ld a,(win)
+	or a
+	ret z		   ; exit loop if level has not been completed
+part2_init:
+	ld hl,lvlb1
+	xor a
+	ld (bchk),a
+	call init_lvlb
+	ld a,(death)    ; check if died
+	or a
+	jp nz,lost_life
+	ld a,(win)
+	or a
+	ret z		   ; exit loop if level has not been completed
+	xor a		   ; initialize boss variables
+	ld (bdir),a
+	ld (bjchk),a
+	inc a
+	ld (bchk),a
+	ld a,28
+	ld (enb),a
+	ld a,44
+	ld (yb),a
+	ld a,76
+	ld (xb),a
+	ld hl,lvlb2
+	call init_lvlb
+	ld a,(death)    ; check if died
+	or a
+	jp nz,lost_life
+	ld a,(win)
+	or a
+	ret z		   ; exit game if level has not been completed
+	ld a,(lvldone)
+	ld b,a
+	ld a,(boss)
+	cp 1
+	jr z,set_bit0
+	set 7,b
+	jr set_bit_done
+set_bit6:
+	set 6,b
+	jr set_bit_done
+set_bit5:
+	set 5,b
+	jr set_bit_done
+set_bit4:
+	set 4,b
+	jr set_bit_done
+set_bit3:
+	set 3,b
+	jr set_bit_done
+set_bit2:
+	set 2,b
+	jr set_bit_done
+set_bit1:
+	set 1,b
+	jr set_bit_done
+set_bit0:
+	set 0,b
+set_bit_done:
+	ld a,b
+	ld (lvldone),a
+	jp cb_init
+lost_life:
+	call wpn_fill
+	ld a,(lives)    ; go to game over screen if all lives lost
+	or a
+	jr z,game_over
+	ld a,(schk)
+	or a
+	jp z,part2_init
+	jp part1_init
+game_over:
+	cp kMode		; exit if MODE was pressed at show password screen
+	ret z
+	ld a,3
+	ld (lives),a
+	bcall(_clrlcdfull)
+	bcall(_grbufclr)
+	call draw
+	call fastcopys
+	ld de,18*256+31
+	ld hl,gover
+	call setvputs
+	ld de,25*256+25
+	ld hl,cont
+	call setvputs
+	ld de,32*256+14
+	ld hl,stgsel
+	call setvputs
+	ld de,39*256+31
+	ld hl,endgame
+	call setvputs
+	bcall(_grbufclr)
+go_loop:
+	bcall(_getcsc)
+	cp k2nd
+	jr z,go_cont
+	cp kMode
+	ret z
+	jr go_loop
+go_cont:
+	ld hl,(remlvl)
+	ld (curlvl),hl
+	jp part1_init
+final_boss:
+	xor a
+	ld (boss),a		;select boss 0
+	ld (win),a		;you haven't won
+	call main_loop	;call the main loop
+	ld a,(death)      ;check if you died
+	or a
+	jp nz,lost_life
+	ld a,(win)
+	or a
+	ret z		   ; exit game if level has not been completed
+ending:
+	ld hl,endingtext
+	call draw_text
+	ld hl,creditext
+	call draw_text
+	ld a,11
+	ld a,28
+	ld hl,and_inf
+	call centertext
+	call clrwait
+	ret
+init_lvlb:
+	ld (curlvl),hl
+	call init_vars
+	ld (schk),a
+	ld (bcount),a
+	call ShowLevel
+	call main_loop
+	ld a,(win)	      ; see if you defeated TI's spaceship
+	cp 2
+	jr z,ship_dead
+	bcall(_getcsc)	      ; clear the keybuffer
+	bcall(_grbufclr)
+	bcall(_clrlcdfull)
+	ret
+init_vars:
+	ld hl,0
+	ld (xscr),hl
+	ld (tempscr),hl
+	ld hl,8		 ; initialize some variables
+	ld (xmm),hl
+	xor a
+	ld (wchk),a
+	ld (wchk1),a
+	ld (wchk2),a
+	ld (wchk3),a
+	ld (win),a
+	ld (death),a
+	ld (feet),a
+	ld (item),a
+	ld (echk),a
+	ld (bwchk),a
+	ld (hchk),a
+	ret
+ship_dead:
+	ld a,28
+	ld (enb),a
+	call check_spr
+	call xor_char
+	ld b,0		  ; erase ship
+	call ship_init
+ti_fall:				; TI falls to the bottom of the screen
+	ld a,(yb)
+	inc a
+	ld (yb),a
+	call xor_boss
+	call fastcopys
+	call xor_boss
+	ld a,(yb)
+	cp 44
+	jr nz,ti_fall
+	call check_spr
+	call xor_char
+	ret
+main_loop:
+	ld hl,(xmm)
+	call load_x
+	ld a,(ymm)
+	add a,4
+	push hl
+	push af
+	call GetBlock
+	pop af
+	pop hl
+	ld de,8
+	add hl,de
+	call GetBlock
+	call ShowLevel
+	call check_spr		; figure out which Mega Man sprite to use
+	call xor_char		; draw it
+	call fastcopys		;copy everything to the buffer
+	call xor_char		;erase the Megaman sprite
+	ld a,(echk)			;check for enemy and erase as necessary
+	bcall(_grbufclr)
+	call find_spr
+	ld a,$FD			;check ENTER
+	out (1),a
+	in a,(1)
+	bit 0,a
+	call z,pause
+	ld a,$FE			;check arrow keys
+	out (1),a
+	in a,(1)
+	bit 1,a
+	call z,move_left
+	bit 2,a
+	call z,move_right
+	ld a,$BF			;check other keys
+	out (1),a
+	in a,(1)
+	bit 5,a
+	jr jump_button_down
+main2:
+	bit 6,a
+	ret z				;exit loop is MODE has been pressed
+	ld a,(death)
+	or a
+	ret nz			;exit loop if dead
+	ld a,(win)
+	or a
+	jp z,main_loop		;exit loop if level completed
+	ret
+jchk_now_2:	     ; make sure you can't jump
+	push af
+	ld a,2
+	ld (jchk),a
+	pop af
+	ret
+jump_button_down:
+	push af
+	ld a,1
+	ld (maxjh),a
+	call z,jump
+	call nz,jchk_now_2
+	call fall
+	pop af
+	jr main2
+move_right:
+	ld a,(feet)
+	and $02
+	ld hl,mmrr2
+	jr nz,rr2_spr
+	ld hl,mmrr
+rr2_spr:
+	ld (curpic),hl
+	ld a,(xmm)
+	cp 80
+	call z,won
+	call CheckRight
+	call z,CheckRight2
+	call z,CheckRight3
+	jr nz,no_right
+	ld a,(xmm)
+	cp 44
+	jr nz,no_scroll
+	ld a,(xscr)
+	cp 68
+	jr z,no_scroll
+	ld a,(schk)
+	or a
+	jr z,no_scroll
+	call scroll
+	jr no_right
+no_scroll:
+	ld hl,(xmm)
+	inc hl
+	inc hl
+	ld (xmm),hl
+no_right:
+	ld a,(dir)
+	or a
+	call z,change_right
+	ret
+change_right:
+	ld a,1
+	ld (dir),a
+	ret
+move_left:
+	push af
+	ld a,(feet)
+	and $02
+	ld hl,mmrl2
+	jr nz,rl2_spr
+	ld hl,mmrl
+rl2_spr:
+	ld (curpic),hl
+	ld a,(xmm)
+	or a
+	jr z,no_left
+	call CheckLeft
+	call z,CheckLeft2
+	call z,CheckLeft3
+	jr nz,no_left
+	call change_left
+	ld hl,(xmm)
+	dec hl
+	dec hl
+	ld (xmm),hl
+no_left:
+	ld a,(dir)
+	or a
+	call nz,change_left
+	pop af
+	ret
+change_left:
+	xor a
+	ld (dir),a
+	ret
+CheckRight:
+	ld hl,(xmm)
+	call load_x
+	ld de,8
+	add hl,de
+	jr CheckHorz
+CheckLeft:
+	ld hl,(xmm)
+	call load_x
+	dec hl
+CheckHorz:
+	ld a,(ymm)
+	call GetBlock
+	call CheckTile
+	ret
+CheckRight2:
+	ld hl,(xmm)
+	call load_x
+	ld de,8
+	add hl,de
+	jr CheckHorz2
+CheckLeft2:
+	ld hl,(xmm)
+	call load_x
+	dec hl
+CheckHorz2:
+	ld a,(ymm)
+	add a,11
+	call GetBlock
+	call CheckTile
+	ret
+CheckRight3:
+	ld hl,(xmm)
+	call load_x
+	ld de,8
+	add hl,de
+	jr CheckHorz3
+CheckLeft3:
+	ld hl,(xmm)
+	call load_x
+	dec hl
+CheckHorz3:
+	ld a,(ymm)
+	add a,6
+	call GetBlock
+	call CheckTile
+	ret
+pause:
+	call tiny_delay
+pause_loop:
+	bcall(_getcsc)
+	cp kMode
+	ret z
+	cp kEnter
+	jr nz,pause_loop
+	call tiny_delay
+	ret
+GetBlock:	       ; Gets the block at (HL,A) -> A. HL = addr, B,C = coord
+	srl h
+	rr l
+	srl h
+	rr l
+	srl h
+	rr l	    ; Divide X with 8
+	ld b,l
+	cp 64
+	jr c,OnScreen
+	xor a
+OnScreen:
+	srl a
+	srl a
+	srl a	   ; Divide Y with 8
+	ld c,a
+	add hl,hl
+	add hl,hl
+	add hl,hl
+	ld d,0
+	ld e,a
+	add hl,de       ; HL = x*8+y
+	ld de,(curlvl)
+	add hl,de       ; Add HL with the pointer to the level data
+	ld a,(hl)
+	ret
+CheckTile:
+	or a
+	ret z
+	cp 8
+	ret c
+	xor a
+	ret
+jump:
+	push af
+	ld a,(jchk)
+	cp 2
+	jr z,no_jump
+	or a
+	jr nz,jump_up
+	ld a,1
+	ld (jchk),a
+	ld a,(ymm)
+	sub 16
+	jr nc,jrem_not0
+	ld a,1
+jrem_not0:
+	ld (jrem),a
+jump_up:
+	ld a,(jrem)
+	ld b,a
+	ld a,(ymm)
+	cp b
+	jr c,end_jump
+	call CheckUp
+	call z,CheckUp2
+	jr nz,end_jump
+	ld a,(ymm)
+	dec a
+	dec a
+	dec a
+	dec a
+	ld (ymm),a
+	jr no_jump
+end_jump:
+	ld a,2
+	ld (jchk),a
+no_jump:
+	pop af
+	ret
+fall:
+	push af
+	ld a,(jchk)
+	cp 1
+	jr z,no_fall
+	call CheckDown
+	call z,CheckDown2
+	jr nz,end_fall
+	ld a,(ymm)
+	inc a
+	inc a
+	inc a
+	inc a
+	ld (ymm),a
+	cp 52
+	call z,die
+	jr no_fall
+end_fall:
+	xor a
+	ld (jchk),a
+no_fall:
+	pop af
+	ret
+CheckUp:
+	ld a,(ymm)
+	dec a
+	jr CheckVert
+CheckDown:
+	ld a,(ymm)
+	add a,12
+CheckVert:
+	ld hl,(xmm)
+	call load_x
+	call GetBlock
+	call CheckTile
+	ret
+CheckUp2:
+	ld a,(ymm)
+	dec a
+	jr CheckVert2
+CheckDown2:
+	ld a,(ymm)
+	add a,12
+CheckVert2:
+	ld hl,(xmm)
+	call load_x
+	ld de,7
+	add hl,de
+	call GetBlock
+	call CheckTile
+	ret
+inc_wchk:	       ; lets you shoot again
+	inc a
+	cp 8
+	jr nz,keep_wchk
+	xor a
+keep_wchk:
+	ld (wchk),a
+	ret
+die:
+	call short_delay
+	ld a,(lives)
+	dec a
+	ld (lives),a
+	ld a,1
+	ld (death),a
+	ret
+won:
+	ld a,1
+	ld (win),a
+	ld a,(bchk)	     ; check for boss
+	or a
+	ret z
+	ld a,(boss)	     ; see if that boss was the spaceship
+	cp 5
+	ret nz
+	ld a,2	  ; if so, set win=2
+	ld (win),a
+	ret
+scroll:
+	bcall(_grbufclr)
+	ld a,(tempscr)
+	inc a
+	inc a
+	cp 8
+	jr nz,scroll_cont
+	ld a,(xscr)
+	inc a
+	ld (xscr),a
+	xor a
+scroll_cont:
+	ld (tempscr),a
+	ld a,(echk)
+	or a
+	call nz,next_en
+	ld a,(echk)
+	or a
+	ret z
+	cp 3
+	ret z
+	ld a,(xe)       ; decrease x-coord of enemy
+	dec a
+	ld (xe),a
+	or a
+	call z,en_dead
+	ret
+ShowLevel:
+	ld hl,(xscr)
+	add hl,hl
+	add hl,hl
+	add hl,hl
+	push hl
+	pop de
+	ld hl,(curlvl)
+	add hl,de
+	ld bc,0
+RepShowLevel:	   ; displays the current full screen of the level
+	ld a,(hl)
+	cp 5
+	call nc,item_init
+	inc hl
+	push hl
+	ld h,0
+	ld l,a
+	add hl,hl
+	add hl,hl
+	add hl,hl
+	ld de,lvlspr
+	add hl,de
+	push bc
+	ld a,(tempscr)
+	ld d,a
+	ld a,b
+	sub d
+	jr c,skip_8x8
+	ld (x2),a
+	ld a,c
+	ld (y2),a
+	ld (smlspr),hl
+	call xor_8x8
+skip_8x8:
+	pop bc
+	pop hl
+	ld a,c
+	add a,8
+	ld c,a
+	cp 64
+	jr nz,RepShowLevel
+	ld c,0
+	ld a,b
+	add a,8
+	ld b,a
+	cp 96
+	jr nz,RepShowLevel
+	ret
+item_init:
+	ld d,a
+	cp 8
+	jr nc,no_en_init
+	ld a,(item)
+	cp 2
+	jr z,no_item_init
+	ld a,1
+	ld (item),a
+	ld a,d
+	ret
+no_item_init:
+	xor a		   ; replace item sprite with blank sprite
+	ret
+t_init:
+i_init:
+no_en_init:
+	xor a		   ; replace enemy sprite with blank sprite
+	ret
+load_x:			 ; loads x location (input as hl) into hl, accounting for scrolling
+	push hl
+	ld hl,(xscr)
+	add hl,hl
+	add hl,hl
+	add hl,hl
+	pop de
+	add hl,de
+	push hl
+	ld hl,(tempscr)
+	pop de
+	add hl,de
+	ret
+sub_screen:
+	push af
+	bcall(_clrlcdfull)
+	bcall(_grbufclr)
+	call tiny_delay
+	xor a
+	ld (wchk1),a
+	ld (wchk2),a
+	ld (wchk3),a
+	ld a,(wpn)
+	or a
+	jr z,ss_cont
+	cp 1
+	jr z,en_an
+	cp 2
+	jr z,en_ma
+	cp 3
+	jr z,en_md
+	cp 4
+	jr z,en_do
+	cp 5
+	jr z,en_se
+	cp 6
+	jr z,en_po
+	cp 7
+	jr z,en_fr
+	cp 8
+	jr z,en_sa
+	cp 9
+	jr z,en_mi
+en_an:
+	ld a,(enwpn)
+	ld (enan),a
+	jr ss_cont
+en_ma:
+	ld a,(enwpn)
+	ld (enma),a
+	jr ss_cont
+en_md:
+	ld a,(enwpn)
+	ld (enmd),a
+	jr ss_cont
+en_do:
+	ld a,(enwpn)
+	ld (endo),a
+	jr ss_cont
+en_se:
+	ld a,(enwpn)
+	ld (ense),a
+	jr ss_cont
+en_po:
+	ld a,(enwpn)
+	ld (enpo),a
+	jr ss_cont
+en_fr:
+	ld a,(enwpn)
+	ld (enfr),a
+	jr ss_cont
+en_sa:
+	ld a,(enwpn)
+	ld (ensa),a
+	jr ss_cont
+en_mi:
+	ld a,(enwpn)
+	ld (enmi),a
+ss_cont:
+	ld a,28
+	ld (x2),a
+	ld a,53
+	ld (y2),a
+	ld a,55
+	ld (x2),a
+	xor a
+	ld (x2),a
+	inc a
+	ld (y2),a
+	ld hl,pwdot
+	ld (smlspr),hl
+ss_loop_new:
+	call xor_8x8
+	call fastcopys
+	ld a,(lvldone)
+	bit 0,a
+	jr z,ss_line1
+	ld d,16
+	ld e,15
+	push af
+	ld a,(enan)
+	add a,17
+	ld h,a
+	ld l,15
+	ld a,1
+	call fastline
+	pop af
+ss_line1:
+	bit 1,a
+	jr z,ss_line2
+	ld d,16
+	ld e,25
+	push af
+	ld a,(enma)
+	add a,17
+	ld h,a
+	ld l,25
+	ld a,1
+	call fastline
+	pop af
+ss_line2:
+	bit 2,a
+	jr z,ss_line3
+	ld d,16
+	ld e,35
+	push af
+	ld a,(enmd)
+	add a,17
+	ld h,a
+	ld l,35
+	ld a,1
+	call fastline
+	pop af
+ss_line3:
+	bit 3,a
+	jr z,ss_line4
+	ld d,16
+	ld e,45
+	push af
+	ld a,(endo)
+	add a,17
+	ld h,a
+	ld l,45
+	ld a,1
+	call fastline
+	pop af
+ss_line4:
+	bit 4,a
+	jr z,ss_line5
+	ld d,63
+	ld e,15
+	push af
+	ld a,(enpo)
+	add a,64
+	ld h,a
+	ld l,15
+	ld a,1
+	call fastline
+	pop af
+ss_line5:
+	bit 5,a
+	jr z,ss_line6
+	ld d,63
+	ld e,5
+	push af
+	ld a,(ense)
+	add a,64
+	ld h,a
+	ld l,5
+	ld a,1
+	call fastline
+	ld d,63
+	ld e,25
+	ld a,(enfr)
+	add a,64
+	ld h,a
+	ld l,25
+	ld a,1
+	call fastline
+	pop af
+ss_line6:
+	bit 6,a
+	jr z,ss_line7
+	ld d,63
+	ld e,35
+	push af
+	ld a,(ensa)
+	add a,64
+	ld h,a
+	ld l,35
+	ld a,1
+	call fastline
+	pop af
+ss_line7:
+	bit 7,a
+	jr z,ss_line_done
+	ld d,63
+	ld e,45
+	ld a,(enmi)
+	add a,64
+	ld h,a
+	ld l,45
+	ld a,1
+	call fastline
+ss_line_done:
+	ld d,16
+	ld e,5
+	ld a,(enp)
+	add a,17
+	ld h,a
+	ld l,5
+	ld a,1
+	call fastline
+	call fastcopys
+	ld a,(lvldone)
+	bit 0,a
+	jr z,ss_bit1
+	ld de,12*256+7
+	ld hl,an
+	call setvputs
+ss_bit1:
+	bit 1,a
+	jr z,ss_bit2
+	ld de,22*256+7
+	ld hl,ma
+	call setvputs
+ss_bit2:
+	bit 2,a
+	jr z,ss_bit3
+	ld de,32*256+7
+	ld hl,md
+	call setvputs
+ss_bit3:
+	bit 3,a
+	jr z,ss_bit4
+	ld de,42*256+7
+	ld hl,do
+	call setvputs
+ss_bit4:
+	bit 4,a
+	jr z,ss_bit5
+	ld de,12*256+54
+	ld hl,po
+	call setvputs
+ss_bit5:
+	bit 5,a
+	jr z,ss_bit6
+	ld de,22*256+54
+	ld hl,fr
+	call setvputs
+	ld de,2*256+54
+	ld hl,se
+	call setvputs
+ss_bit6:
+	bit 6,a
+	jr z,ss_bit7
+	ld de,32*256+54
+	ld hl,sa
+	call setvputs
+ss_bit7:
+	bit 7,a
+	jr z,ss_loop_init
+	ld de,42*256+54
+	ld hl,mi
+	call setvputs
+ss_loop_init:
+	ld de,2*256+7
+	ld hl,p
+	call setvputs
+	ld a,(tanks)
+	bcall(_setxxop1
+	ld hl,54*256+40
+	ld (pencol),hl
+	ld a,1
+	bcall(_dispop1a)
+	ld a,(lives)
+	bcall(_setxxop1)
+	ld hl,54*256+67
+	ld (pencol),hl
+	ld a,1
+	bcall(_dispop1a)
+	call xor_8x8
+ss_loop:
+	bcall(_getcsc)
+	cp kUp
+	jp z,ss_up
+	cp kDown
+	jp z,ss_down
+	cp kLeft
+	jp z,ss_horz
+	cp kRight
+	jp z,ss_horz
+	cp k2nd
+	jp z,ss_tank
+	cp kMode
+	jp z,ss_mode
+	cp kYEq
+	jr nz,ss_loop
+	ld hl,wpp
+	ld a,(lvldone)
+	ld b,a
+	ld a,(x2)
+	or a
+	ld a,(y2)
+	jr z,wpn_left
+wpn_left:
+	ld c,0
+	ld hl,wpp
+	cp 1
+	jp z,ss_exit
+	cp 11
+	jr z,ss_an
+ss_an:
+	bit 0,b
+	jr z,ss_loop
+	ld c,1
+	ld a,(enan)
+	ld (enwpn),a
+	ld hl,wpan
+	jp ss_exit
+ss_exit:
+	ld a,c
+	ld (wpn),a
+	ld (wpnspr),hl
+	bcall(_clrlcdfull)
+	bcall(_grbufclr)
+	call ShowLevel
+	pop af
+	call tiny_delay
+	ret
+ss_mode:
+	pop bc		  ; pop to something other than af so it remembers that MODE has been pressed
+	ret
+ss_up:
+	ld a,(y2)
+	cp 1
+	jr z,ss_vert
+	sub 10
+	ld (y2),a
+	jp ss_loop_new
+ss_down:
+	ld a,(y2)
+	cp 41
+	jr z,ss_vert
+	add a,10
+	ld (y2),a
+	jp ss_loop_new
+ss_vert:
+	ld b,a
+	ld a,42
+	sub b
+	ld (y2),a
+	jp ss_loop_new
+ss_horz:
+	ld a,(x2)
+	ld b,a
+	ld a,47
+	sub b
+	ld (x2),a
+	jp ss_loop_new
+ss_tank:
+	ld a,(tanks)
+	or a
+	jp z,ss_loop_new
+	dec a
+	ld (tanks),a
+	ld a,28
+	ld (enp),a
+	jp ss_loop_new
+xor_char:
+	ld ix,(curpic)
+	ld b,12
+	ld a,(ymm)
+	ld l,a
+	ld a,(xmm)
+	call isprite
+	ret
+check_spr:
+	ld a,(dir)
+	or a
+	jr z,check_spr_l
+check_spr_r:
+	ld hl,mmhr
+	ld a,(hchk)
+	or a
+	jr nz,found_spr
+	ld a,(ymm)
+	add a,12
+	call CheckVert
+	jr c,not_jump_r
+	ld hl,mmjr
+	ld a,(jchk)
+	or a
+	jr nz,found_spr
+not_jump_r:
+	ld hl,mmwr
+	ld a,(wchk)
+	or a
+	jr nz,found_spr
+	ret
+check_spr_l:
+	ld hl,mmhl
+	ld a,(hchk)
+	or a
+	jr nz,found_spr
+	ld a,(ymm)
+	add a,12
+	call CheckVert
+	jr c,not_jump_l
+	ld hl,mmjl
+	ld a,(jchk)
+	or a
+	jr nz,found_spr
+not_jump_l:
+	ld hl,mmwl
+	ld a,(wchk)
+	or a
+	jr nz,found_spr
+	ret
+found_spr:
+	ld (curpic),hl
+	ret
+find_spr:
+	ld a,(dir)
+	or a
+	jr z,left_spr
+	ld hl,mmsr
+	jr found_spr
+left_spr:
+	ld hl,mmsl
+	jr found_spr
+t_move:
+	call xor_en
+	call check_en_dist
+	ld a,(edir)
+	or a
+	ld a,(xe)
+	jr z,t_move_l
+	inc a
+	jr t_move_r
+t_move_l:
+	dec a
+	or a
+	call z,en_dead
+t_move_r:
+	ld (xe),a
+	ret
+i_move:
+	call xor_en
+	call check_en_dist
+	ld a,(edir)
+	or a
+	ld a,(ye)
+	jr z,i_move_u
+	inc a
+	jr i_move_d
+i_move_u:
+	dec a
+i_move_d:
+	ld (ye),a
+	ret
+ti_check:
+	ld a,(echk)
+	cp 3
+	jr nz,tic_cont
+	xor a
+	ld (echk),a
+tic_cont:
+	ld b,46
+	ld c,46
+	ld a,(bcount)
+	inc a
+	ld (bcount),a
+	cp 50
+	ld a,7
+	call z,item_init
+	ld a,(bcount)
+	cp 100
+	ld a,9
+	call z,item_init
+	ld a,(bcount)
+	cp 100
+	ret nz
+	xor a
+	ld (bcount),a
+	ret
+ship_check:
+	ld a,(bcount)
+	inc a
+	cp 50
+	jr z,ship_laser
+	ld (bcount),a
+	ret
+ship_laser:
+	xor a
+	ld (bcount),a
+	ld b,1
+	call xor_laser
+	call short_delay
+	ld a,(ymm)
+	cp 38
+	call c,die
+	ld b,0
+	call xor_laser
+	ret
+boss_move:
+	call xor_boss
+	ld a,(boss)
+	or a
+	jr z,ti_check
+	cp 5
+	jr z,ship_check
+	ld a,(bjchk)
+	or a
+	jr nz,boss_jump
+	ld a,(bdir)
+	or a
+	ld a,(xb)
+	jr z,boss_move_l
+	inc a
+	cp 76
+	jr boss_move_r
+boss_move_l:
+	dec a
+	cp 56
+boss_move_r:
+	ld (xb),a
+	jr z,boss_turn
+	cp 66
+	call z,boss_shoot
+	ret
+boss_turn:
+	ld a,(bdir)	     ; reverse dir boss is moving
+	ld b,a
+	ld a,1
+	sub b
+	ld (bdir),a
+	ld a,2
+	ld (bjchk),a
+	ret
+boss_jump:
+	ld a,(bjchk)
+	cp 1
+	ld a,(yb)
+	jr z,boss_fall
+	dec a
+	cp 34
+	jr boss_jump_end
+boss_fall:
+	inc a
+	cp 44
+boss_jump_end:
+	ld (yb),a
+	ret nz
+	ld a,(bjchk)
+	dec a
+	ld (bjchk),a
+	ret
+bshoot_sa:
+	ld a,(xb)
+	ld (bwx),a
+	call xor_boss
+	ret
+bshoot_fr:
+	ld a,(xb)
+	ld (bwx),a
+	ret
+bshoot_md:
+	ld a,(xb)
+	sub 8
+	ld (bwx),a
+	ret
+boss_shoot:
+	ld a,(bwchk)
+	or a
+	ret nz
+	inc a
+	ld (bwchk),a
+	ld a,(boss)
+	cp 3
+	jr z,bshoot_md
+	cp 7
+	jr z,bshoot_fr
+	cp 8
+	jr z,bshoot_sa
+	ld a,58
+	ld (bwx),a
+	ret
+bssa_move:
+	call xor_boss
+	call check_spr
+	call xor_char
+bssam_loop:
+	ld a,(bwx)
+	dec a
+	ld (bwx),a
+	call xor_bwpn
+	call fastcopys
+	call xor_bwpn
+	ld a,(bwx)
+	or a
+	jr nz,bssam_loop
+bssam_loop2:
+	ld a,(bwx)
+	inc a
+	ld (bwx),a
+	call xor_bwpn
+	call fastcopys
+	call xor_bwpn
+	ld a,(bwx)
+	cp 88
+	jr nz,bssam_loop2
+bssam_loop3:
+	ld a,(bwx)
+	dec a
+	ld (bwx),a
+	call xor_bwpn
+	call fastcopys
+	call xor_bwpn
+	ld a,(xb)
+	ld b,a
+	ld a,(bwx)
+	cp b
+	jr nz,bssam_loop3
+	xor a
+	ld (bwchk),a
+	call check_spr
+	call xor_char
+	ld a,(ymm)
+	ld b,a
+	ld a,37
+	cp b
+	ret nc
+	add a,16
+	cp b
+	ret c
+	ld a,(enp)
+	or a
+	sub 4
+	jr nc,bssam_nokill
+	xor a
+bssam_nokill:
+	ld (enp),a
+	ret
+bsfr_move:
+	call check_spr
+	call xor_char
+	call xor_boss
+	call xor_bwpn
+	call fastcopys
+	call xor_char
+	call xor_boss
+	call xor_bwpn
+	call short_delay
+	xor a
+	ld (bwchk),a
+	ld a,(xmm)
+	ld b,a
+	ld a,55
+	cp b
+	ret nc
+	add a,22
+	cp b
+	ret c
+	ld a,(ymm)
+	ld b,a
+	ld a,33
+	cp b
+	ret nc
+	add a,11
+	cp b
+	ret c
+	ld a,(enp)
+	or a
+	sub 4
+	jr nc,bsfrm_nokill
+	xor a
+bsfrm_nokill:
+	ld (enp),a
+	ret
+bsmd_move:
+	call short_delay
+	ld a,(enp)
+	or a
+	sub 4
+	jr nc,bsmdm_nokill
+	xor a
+bsmdm_nokill:
+	ld (enp),a
+	xor a
+	ld (bwchk),a
+	ret
+boss_shot_move:
+	call xor_bwpn
+	ld a,(boss)
+	cp 8
+	jp z,bssa_move
+	cp 3
+	jr z,bsmd_move
+	cp 7
+	jr z,bsfr_move
+	ld a,(xb)
+	ld b,a
+	ld a,(bwx)
+	cp 2
+	jr c,bsm_end
+	cp b
+	jr z,bsm_end
+	ld b,a
+bsm_cont:
+	dec b
+	dec b
+	ld a,(boss)
+	cp 4
+	jr nz,bsm_store
+	dec b
+bsm_store:
+	ld a,b
+	ld (bwx),a
+	ret
+bsm_end:
+	xor a		   ; boss's shot is off the screen
+	ld (bwchk),a
+	ret
+check_en_dist:		  ; check distance enemy has moved and turn around if necessary
+	ld a,(ecount)
+	inc a
+	cp 33
+	call z,en_turn
+	ld (ecount),a
+	ret
+en_turn:
+	ld hl,(enspr)
+	ld de,8
+	ld a,(edir)
+	or a
+	jr z,en_turn_r
+	sbc hl,de
+	dec a
+	jr en_turn_l
+en_turn_r:
+	add hl,de
+	inc a
+en_turn_l:
+	ld (enspr),hl
+	ld (edir),a
+	xor a
+	ret
+en_dead:			; enemy is now dead
+	ld a,3
+	ld (echk),a
+	xor a
+	ld (ecount),a
+	ret
+next_en:			; check if previous enemy is clear so next enemy can initialize
+	ld a,(ecount2)
+	inc a
+	ld (ecount2),a
+	cp 96
+	ret nz
+	xor a
+	ld (echk),a
+	ret
+xor_en:
+	ld ix,(enspr)
+	ld b,8
+	ld a,(ye)
+	ld l,a
+	ld a,(xe)
+	call isprite
+	ret
+xor_corners:
+	ld hl,uprlft
+	ld (smlspr),hl
+	call xor_8x8
+	ld a,(x2)
+	add a,22
+	ld (x2),a
+	ld hl,uprrt
+	ld (smlspr),hl
+	call xor_8x8
+	ld a,(y2)
+	add a,12
+	ld (y2),a
+	ld hl,lwrrt
+	ld (smlspr),hl
+	call xor_8x8
+	ld a,(x2)
+	sub 22
+	ld (x2),a
+	ld hl,lwrlft
+	ld (smlspr),hl
+	call xor_8x8
+	ld a,(y2)
+	sub 12
+	ld (y2),a
+	ret
+xor_8x8:
+	ld ix,(smlspr)
+	ld b,8
+	ld a,(y2)
+	ld l,a
+	ld a,(x2)
+	call isprite
+	ret
+xor_wpn1:
+	ld ix,(wpnspr)
+	ld b,4
+	ld a,(wy1)
+	ld l,a
+	ld a,(wx1)
+	call isprite
+	ret
+xor_wpn2:
+	ld ix,(wpnspr)
+	ld b,4
+	ld a,(wy2)
+	ld l,a
+	ld a,(wx2)
+	call isprite
+	ret
+xor_wpn3:
+	ld b,4
+	ld a,(wy3)
+	ld l,a
+	ld a,(wx3)
+	ld ix,(wpnspr)
+	call isprite
+	ret
+xor_bwpn:
+	ld b,4
+	ld l,49
+	ld a,(bwx)
+	ld ix,(bwspr)
+	call isprite
+	ret
+tiny_delay:
+	ld b,20
+	jr del_loop
+short_delay:
+	ld b,50
+	jr del_loop
+long_delay:
+	call delay
+med_delay:
+	ld b,100
+	jr del_loop
+delay:
+	ld b,200
+del_loop:
+	halt
+	halt
+	djnz del_loop
+	ret
+disp_boss:
+	ld (bosspic),hl
+	bcall(_clrlcdfull)
+	bcall(_grbufclr)
+	xor a
+	ld (x2),a
+	ld a,16
+	ld (y2),a
+	ld hl,bint
+	ld (smlspr),hl
+	ld b,12
+draw1:
+	push bc
+	call xor_8x8
+	ld a,(x2)
+	add a,8
+	ld (x2),a
+	pop bc
+	djnz draw1
+	ld a,0
+	ld (x2),a
+	ld a,40
+	ld (y2),a
+	ld hl,bint
+	ld (smlspr),hl
+	ld b,12
+draw2:
+	push bc
+	call xor_8x8
+	ld a,(x2)
+	add a,8
+	ld (x2),a
+	pop bc
+	djnz draw2
+	call xor_boss
+	call fastcopys
+	ret
+xor_boss:
+	ld b,12
+	ld a,(yb)
+	ld l,a
+	ld a,(xb)
+	ld ix,(bosspic)
+	call isprite
+	ret
+no_an:
+	call draw
+	ret
+no_ma:
+	call draw
+	ret
+no_md:
+	call draw
+	ret
+no_do:
+	call draw
+	ret
+no_po:
+	call draw
+	ret
+no_fr:
+	call draw
+	ret
+no_sa:
+	call draw
+	ret
+no_mi:
+	call draw
+	ret
+you_got:
+	bcall(_clrlcdfull)
+	bcall(_grbufclr)
+	call draw
+	ld hl,35
+	ld (xmm),hl
+	ld a,50
+	ld (ymm),a
+	ld hl,mmsr
+	ld (curpic),hl
+	ld a,43
+	ld (wx1),a
+	ld a,51
+	ld (wy1),a
+	ld a,(boss)
+	cp 3
+	jr z,yg_cont
+	ld hl,mmwr
+	ld (curpic),hl
+	ld a,55
+	ld (wx1),a
+	ld a,55
+	ld (wy1),a
+	ld a,(boss)
+	ld hl,wpan
+	cp 1
+	jr z,yg_cont
+	cp 2
+	jr z,yg_cont
+	cp 4
+	jr z,yg_cont
+	cp 6
+	jr z,yg_cont
+	cp 9
+	jr z,yg_cont
+	push af
+	ld a,35
+	ld (wx1),a
+	ld a,54
+	ld (wy1),a
+	call xor_char
+	pop af
+	cp 8
+	jr z,yg_cont
+	ld (wpnspr),hl
+	call xor_wpn1
+	ld a,50
+	ld (wy1),a
+	call xor_wpn1
+	ld a,58
+	ld (wy1),a
+yg_cont:
+	ld (wpnspr),hl
+	call xor_wpn1
+	call xor_char
+	call fastcopys
+	ld de,10*256+35
+	ld hl,yougot
+	call setvputs
+	ld a,(boss)
+	cp 1
+	jr z,yg_an
+	jr yg_mi
+yg_an:
+	ld de,20*256+28
+	ld hl,ygan
+	call setvputs
+	jr yg_loop
+yg_mi:
+	ld de,20*256+28
+	ld hl,ygmi
+	call setvputs
+yg_loop:
+	bcall(_getcsc)
+	cp kMode
+	ret z
+	cp kEnter
+	jr nz,yg_loop
+	ret
+draw_grid:
+	bcall(_clrlcdfull)
+	bcall(_grbufclr)
+	call draw
+	ret
+pw_text:
+	ld de,1*256+31
+	ld hl,one
+	call setvputs
+	ld de,1*256+40
+	ld hl,two
+	call setvputs
+	ld de,1*256+49
+	ld hl,three
+	call setvputs
+	ld de,1*256+58
+	ld hl,four
+	call setvputs
+	ld de,1*256+67
+	ld hl,five
+	call setvputs
+	ld de,10*256+23
+	ld hl,a
+	call setvputs
+	ld de,19*256+23
+	ld hl,b
+	call setvputs
+	ld de,28*256+23
+	ld hl,c
+	call setvputs
+	ld de,37*256+23
+	ld hl,d
+	call setvputs
+	ld de,46*256+23
+	ld hl,e
+	call setvputs
+	ld de,56*256+32
+	ld hl,enter
+	call setvputs
+	ret
+show_pw:
+	call draw_grid
+	ld a,(tanks)	    ; find correct password dot for number of tanks
+	ld b,1
+	or a
+	jr z,spw_cont
+	ld b,2
+	cp 1
+	jr z,spw_cont
+	ld b,4
+	cp 2
+	jr z,spw_cont
+	ld b,8
+	cp 3
+	jr z,spw_cont
+	ld b,16
+spw_cont:
+	ld a,b
+	ld (tankpw),a
+	ld hl,pwdot
+	ld (smlspr),hl
+	ld a,(lvldone)
+	bit 0,a
+	jr z,no_an_dot
+	ld a,28
+	jr an_dot
+no_an_dot:
+	ld a,46 
+an_dot:
+	ld (y2),a
+	ld a,47
+	ld (x2),a
+	call xor_8x8
+	ld a,(lvldone)
+	bit 1,a
+	jr z,no_ma_dot
+	ld a,10
+	ld (y2),a
+	ld a,38
+	jr ma_dot
+no_ma_dot:
+	ld a,28
+	ld (y2),a
+	ld a,65
+ma_dot:
+	ld (x2),a
+	call xor_8x8
+	ld a,(lvldone)
+	bit 2,a
+	jr z,no_md_dot
+	ld a,46
+	ld (y2),a
+	ld a,65
+	jr md_dot
+no_md_dot:
+	ld a,10
+	ld (y2),a
+	ld a,56
+md_dot:
+	ld (x2),a
+	call xor_8x8
+	ld a,(lvldone)
+	bit 3,a
+	jr z,no_do_dot
+	ld a,37
+	ld (y2),a
+	ld a,47
+	jr do_dot
+no_do_dot:
+	ld a,46
+	ld (y2),a
+	ld a,38
+do_dot:
+	ld (x2),a
+	call xor_8x8
+	ld a,(lvldone)
+	bit 4,a
+	jr z,no_po_dot
+	ld a,37
+	ld (y2),a
+	ld a,29
+	jr po_dot
+no_po_dot:
+	ld a,19
+	ld (y2),a
+	ld a,65
+po_dot:
+	ld (x2),a
+	call xor_8x8
+	ld a,(lvldone)
+	bit 5,a
+	jr z,no_fr_dot
+	ld a,56
+	jr fr_dot
+no_fr_dot:
+	ld a,29
+fr_dot:
+	ld (x2),a
+	ld a,19
+	ld (y2),a
+	call xor_8x8
+	ld a,(lvldone)
+	bit 5,a
+	jr z,no_se_dot
+	ld a,46
+	ld (y2),a
+	ld a,29
+	jr se_dot
+no_se_dot:
+	ld a,28
+	ld (y2),a
+	ld a,56
+se_dot:
+	ld (x2),a
+	call xor_8x8
+	ld a,(lvldone)
+	bit 6,a
+	jr z,no_sa_dot
+	ld a,38
+	jr sa_dot
+no_sa_dot:
+	ld a,47
+sa_dot:
+	ld (x2),a
+	ld a,19
+	ld (y2),a
+	call xor_8x8
+	ld a,(lvldone)
+	bit 7,a
+	jr z,no_mi_dot
+	ld a,28
+	ld (y2),a
+	ld a,38
+	jr mi_dot
+no_mi_dot:
+	ld a,37
+	ld (y2),a
+	ld a,56
+mi_dot:
+	ld (x2),a
+	call xor_8x8
+tank_dot:
+	ld a,(tankpw)
+	ld b,a
+	ld a,10
+	ld (y2),a
+	ld a,47
+	ld (x2),a
+	bit 0,b
+	jr nz,tank_dot_found
+	ld a,46
+	ld (y2),a
+	ld a,56
+	ld (x2),a
+	bit 1,b
+	jr nz,tank_dot_found
+	ld a,28
+	ld (y2),a
+	ld a,29
+	ld (x2),a
+	bit 2,b
+	jr nz,tank_dot_found
+	ld a,10
+	ld (y2),a
+	ld a,65
+	ld (x2),a
+	bit 3,b
+	jr nz,tank_dot_found
+	ld a,37
+	ld (y2),a
+	ld a,38
+	ld (x2),a
+tank_dot_found:
+	call xor_8x8
+	call fastcopys
+	call pw_text
+show_pw_loop:
+	bcall(_getcsc)
+	cp kMode
+	ret z
+	cp kEnter
+	jr nz,show_pw_loop
+	ret
+ship_init:
+	ld a,(bchk)
+	or a					
+	ret z
+	call draw
+	ld a,56
+	ld (xb),a
+	ld a,16
+	ld (yb),a
+	ret
+xor_laser:
+	call draw
+	call check_spr
+	call xor_char
+	call xor_boss
+	call fastcopys
+	call draw
+	call xor_char
+	call xor_boss
+	ret
+wpn_fill:
+	ld a,28
+	ld (enp),a
+	ld (enan),a
+	ld (enma),a
+	ld (enmd),a
+	ld (endo),a
+	ld (ense),a
+	ld (enpo),a
+	ld (enfr),a
+	ld (ensa),a
+	ld (enmi),a
+	ld (enwpn),a
+	ret
+draw_nrg:
+	ld a,(bchk)
+	or a
+	call nz,draw_bnrg
+	ld d,10
+	ld e,38
+	ld h,10
+	ld a,(enp)
+	ld b,a
+	ld a,37
+	sub b
+	ld l,a
+	ld a,1
+	call fastline
+	ld a,(wpn)
+	or a
+	ret z
+	ld d,12		 ; draw weapon energy line
+	ld e,38
+	ld h,12
+	ld a,(enwpn)
+	ld b,a
+	ld a,37
+	sub b
+	ld l,a
+	ld a,1
+	call fastline
+	ret
+draw_bnrg:
+	ld d,86
+	ld e,38
+	ld h,86
+	ld a,(enb)
+	ld b,a
+	ld a,37
+	sub b
+	ld l,a
+	ld a,1
+	call fastline
+	ret
+check_ehitu:
+	ld a,(echk)
+	cp 3
+	ret z
+	ld a,(wx1)
+	ld d,a
+	ld a,(wy1)
+	ld e,a
+	ld a,(wchk1)
+	ld c,a
+	or a
+	call nz,check_white
+	ld a,c
+	ld (wchk1),a
+	ld a,(wx2)
+	ld d,a
+	ld a,(wy2)
+	ld e,a
+	ld a,(wchk2)
+	ld c,a
+	or a
+	call nz,check_white
+	ld a,c
+	ld (wchk2),a
+	ld a,(wx3)
+	ld d,a
+	ld a,(wy3)
+	ld e,a
+	ld a,(wchk3)
+	ld c,a
+	or a
+	call nz,check_white
+	ld a,c
+	ld (wchk3),a
+	ld a,(xmm)
+	ld b,a
+	ld a,(xe)
+	sub 7
+	cp b
+	ret nc
+	add a,14
+	cp b
+	ret c
+	ld a,(ymm)
+	ld b,a
+	ld a,(ye)
+	sub 11
+	cp b
+	ret nc
+	add a,18
+	cp b
+	ret c
+	ld a,(enp)
+	or a
+	sub 1
+	jr nc,ehitu_nokill
+	xor a
+ehitu_nokill:
+	ld (enp),a
+	ld a,1
+	ld (hchk),a
+	ret
+check_bhitu:
+	ld a,(wx1)
+	ld d,a
+	ld a,(wy1)
+	ld e,a
+	ld a,(wchk1)
+	ld c,a
+	or a
+	call nz,check_whitb
+	ld a,c
+	ld (wchk1),a
+	ld a,(wx2)
+	ld d,a
+	ld a,(wy2)
+	ld e,a
+	ld a,(wchk2)
+	ld c,a
+	or a
+	call nz,check_whitb
+	ld a,c
+	ld (wchk2),a
+	ld a,(wx3)
+	ld d,a
+	ld a,(wy3)
+	ld e,a
+	ld a,(wchk3)
+	ld c,a
+	or a
+	call nz,check_whitb
+	ld a,c
+	ld (wchk3),a
+	ld a,(boss)
+	cp 5
+	jr z,check_shitu
+	ld a,(xmm)
+	ld b,a
+	ld a,(xb)
+	sub 7
+	cp b
+	ret nc
+	add a,14
+	cp b
+	ret c
+	ld a,(ymm)
+	ld b,a
+	ld a,(yb)
+	sub 11
+	cp b
+	ret nc
+	add a,22
+	cp b
+	ret c
+	ld a,(enp)
+	or a
+	sub 7
+	jr nc,bhitu_nokill
+	xor a
+bhitu_nokill:
+	ld (enp),a
+	ld a,1
+	ld (hchk),a
+	ret
+check_shitu:
+	ld a,(xmm)
+	ld b,a
+	ld a,28
+	cp b
+	ret nc
+	xor a
+	ld (enp),a
+	ld a,1
+	ld (hchk),a
+	ret
+check_bwhitu:
+	ld a,(xmm)
+	ld b,a
+	ld a,(bwx)
+	sub 7
+	cp b
+	ret nc
+	add a,14
+	cp b
+	ret c
+	ld a,(ymm)
+	ld b,a
+	ld a,38
+	cp b
+	ret nc
+	add a,14
+	cp b
+	ret c
+	ld a,(enp)
+	or a
+	sub 2
+	jr nc,bwhitu_nokill
+	xor a
+bwhitu_nokill:
+	ld (enp),a
+	ld a,1
+	ld (hchk),a
+	ret
+check_white:
+	ld a,(xe)
+	ld b,a
+	ld a,d
+	sub 7
+	cp b
+	ret nc
+	add a,14
+	cp b
+	ret c
+	ld a,(ye)
+	ld b,a
+	ld a,e
+	sub 7
+	cp b
+	ret nc
+	add a,10
+	cp b
+	ret c
+	ld c,0
+	ld a,(ene)
+	or a
+	sub 1
+	jr nc,white_nokill
+	xor a
+white_nokill:
+	ld (ene),a
+	or a
+	ret nz
+	ld a,3
+	ld (echk),a
+	ret
+check_whitb:
+	ld a,(boss)
+	cp 5
+	jr z,check_whits
+	ld a,(xb)
+	ld b,a
+	ld a,d
+	sub 7
+	cp b
+	ret nc
+	add a,14
+	cp b
+	ret c
+	ld a,(yb)
+	ld b,a
+	ld a,e
+	sub 11
+	cp b
+	ret nc
+	add a,14
+	cp b
+	ret c
+	ld c,0
+	call dam7_or1
+	ld a,(enb)
+	or a
+	sub 1
+	jr nc,whitb_nokill
+	xor a
+whitb_nokill:
+	ld (enb),a
+	ret nz
+	call won
+	ret
+check_whits:
+	ld b,35
+	ld a,d
+	sub 7
+	cp b
+	ret nc
+	add a,14
+	cp b
+	ret c
+	ld b,42
+	ld a,e
+	cp b
+	ret nc
+	add a,10
+	cp b
+	ret c
+	ld c,0
+	call dam7_or1
+	ld a,(enb)
+	or a
+	sub 1
+	jr nc,whits_nokill
+	xor a
+whits_nokill:
+	ld (enb),a
+	or a
+	ret nz
+	call won
+	ret
+dam7_or1:
+	ld a,(wpn)
+	or a
+	ret z
+	cp 5
+	ret z
+	cp 1
+	jr z,an_on_po
+	cp 2
+	jr z,ma_on_do
+	cp 3
+	jr z,md_on_sa
+	cp 4
+	jr z,do_on_fr
+	cp 6
+	jr z,po_on_md
+	cp 7
+	jr z,fr_on_an
+	cp 8
+	jr z,sa_on_mi
+	cp 9
+	jr z,mi_on_ma
+	ret
+an_on_po:
+	ld a,(boss)
+	cp 5
+	jr z,damage7
+	cp 6
+	ret nz
+	jr damage7
+ma_on_do:
+	ld a,(boss)
+	or a
+	jr z,damage7
+	cp 4
+	ret nz
+	jr damage7
+md_on_sa:
+	ld a,(boss)
+	cp 8
+	ret nz
+	jr damage7
+do_on_fr:
+	ld a,(boss)
+	cp 7
+	ret nz
+	jr damage7
+po_on_md:
+	ld a,(boss)
+	cp 3
+	ret nz
+	jr damage7
+fr_on_an:
+	ld a,(boss)
+	cp 1
+	ret nz
+	jr damage7
+sa_on_mi:
+	ld a,(boss)
+	cp 9
+	ret nz
+	jr damage7
+mi_on_ma:
+	ld a,(boss)
+	cp 2
+	ret nz
+damage7:
+	ld a,(enb)
+	or a
+	sub 6
+	jr nc,dam7_nokill
+	call won
+	xor a
+dam7_nokill:
+	ld (enb),a
+	ret
+thrown_back:
+	xor a
+	ld (hchk),a
+	ld hl,(xmm)
+	call load_x
+	or a
+	ld de,8
+	sbc hl,de
+	push hl
+	push hl
+	call CheckHorz
+	pop hl
+	call z,CheckHorz2
+	pop hl
+	call z,CheckHorz3
+	jr nz,thrown_short
+	ld a,(xmm)
+	sub 8
+	ld (xmm),a
+	ret
+thrown_short:
+	ld hl,(xmm)
+	call load_x
+	push hl
+	srl h
+	rr l
+	srl h
+	rr l
+	srl h
+	rr l		    ; divide x by 8
+	add hl,hl
+	add hl,hl
+	add hl,hl	       ; multiply x by 8
+	push hl
+	pop de
+	pop hl
+	or a
+	sbc hl,de
+	push hl
+	ld hl,(xmm)
+	pop de
+	or a
+	sbc hl,de
+	ld (xmm),hl
+	ret
+draw_text:
+;hl = pointer to text info
+	ld a,(hl)
+	ld e,a
+	inc hl
+	push de
+	push hl
+	bcall(_clrlcdfull)
+	bcall(_grbufclr)
+	ld a,1
+	pop hl
+	pop de
+draw_txt_loop:
+	push af
+	push de
+	push hl
+	call centertext
+	pop hl
+	pop de
+	pop af
+	add a,6
+	cp 59
+	call nc,reseta_draw
+	push af
+	ld a,$00
+	ld b,255
+	cpir
+	pop af
+	dec e
+	jr nz,draw_txt_loop
+	call clrwait
+	ret
+
+reseta_draw:
+	push af
+	push de
+	push hl
+	dec e
+	call nz,clrwait
+	inc e
+	pop hl
+	pop de
+	pop af
+	ld a,1
+	ret
+clrwait:
+	call wait
+	bcall(_clrlcdfull)
+	bcall(_grbufclr)
+	ret
+wait:
+	bcall(_getcsc)
+	or a
+	jr z,wait
+	ret
+quit_force:
+
+draw:
+	push af
+	push bc
+	push de
+	ld a,(hl)
+	ld b,a
+	inc hl
+	ld a,(hl)
+	inc hl
+drawloop:
+;hl = pointer to line data
+;a = draw mode (0=off 1=on 2=xor 3=pattern)
+;b = number of lines
+	push bc
+	ld c,(hl)
+	inc hl
+	ld b,(hl)
+	inc hl
+	ld e,(hl)
+	inc hl
+	ld d,(hl)
+	inc hl
+	push af
+	push hl
+	push bc
+	push de
+	pop de
+	pop hl
+	call fastline
+	pop hl
+	pop af
+	pop bc
+	djnz drawloop
+	pop de
+	pop bc
+	pop af
+	ret
+
+a_n:    .db     "Anchorman",0
+m_a:    .db     "Mailman",0
+m_d:    .db     "Madman",0
+d_o:    .db     "Doorman",0
+
+
+t_i:    .db     "Titanic Iniquity",0
+p_o:    .db     "Policeman",0
+f_r:    .db     "Freshman",0
+s_a:    .db     "Salesman",0
+m_i:    .db     "Milkman",0
+
+p:      .db     "P",0
+an:     .db     "AN",0
+ma:     .db     "MA",0
+md:     .db     "MD",0
+do:     .db     "DO",0
+se:     .db     "??",0
+po:     .db     "PO",0
+fr:     .db     "FR",0
+sa:     .db     "SA",0
+mi:     .db     "MI",0
+
+a:      .db     "A",0
+b:      .db     "B",0
+c:      .db     "C",0
+d:      .db     "D",0
+e:      .db     "E",0
+one:    .db     "1",0
+two:    .db     "2",0
+three:  .db     "3",0
+four:   .db     "4",0
+five:   .db     "5",0
+enter:  .db     "Press Enter",0
+
+yougot: .db     "You Got",0
+ygan:   .db     "Anchor Toss",0
+ygma:   .db     "Stamp Throw",0
+ygmd:   .db     "Swearing Scream",0
+ygdo:   .db     "Splinter Shot",0
+ygpo:   .db     "Badge Boomerang",0
+ygfr:   .db     "Zit Shield",0
+ygse:   .db     "and Top Secret Weapon",0
+ygsa:   .db     "Bill Charge",0
+ygmi:   .db     "Milk Bubble",0
+
+pwerr:  .db     "Password Error!",0
+pwtry:  .db     "Try Again?",0
+yes:    .db     "2nd = Yes",0
+no:     .db     "Alpha = No",0
+
+gover:  .db     "Game Over",0
+cont:   .db     "2nd = Continue",0
+stgsel: .db     "Alpha = Stage Select",0
+endgame:	.db     "Mode = End",0
+and_inf:	.db	"and",0
+intro:	.db 20
+		.db     "The battles of Mega Man and",0
+		.db     "Dr. Wily raged for many",0
+		.db     "years, until age finally",0
+		.db     "began to take its toll on",0
+		.db     "Wily.  In the final years of",0
+		.db     "his life, Wily devoted all",0
+		.db     "his time to constructing",0
+		.db     "his most ingenious and",0
+		.db     "horrifying robotic",0
+		.db     "creation ever...",0
+		.db     "Having used his cherished",0
+		.db     "TI-83+ calculator as the",0
+		.db     "very core of his greatest",0
+		.db     "masterpiece, Wily, with",0
+		.db     "his last dying breath,",0
+		.db     "dubbed his new successor:",0
+		.db     "'Titanic Iniquity',",0
+		.db     "or 'TI' for short.  Mega Man",0
+		.db     "must now stop TI and his 8",0
+		.db     "new robot masters...",0
+
+endingtext:	.db 43
+		.db     "Upon the destruction of TI,",0
+		.db     "Mega Man is visibly upset",0
+		.db     "that such a great thing had",0
+		.db     "to be destroyed...",0
+		.db     "Had it not been for Dr. Wily,",0
+		.db     "the TI-83+ calc might",0
+		.db     "have been used for good",0
+		.db     "instead of for evil...",0
+		.db     "These thoughts all ran",0
+		.db     "through the mind of our hero",0
+		.db     "as he turned around to head",0
+		.db     "back to the lab...",0
+		.db     "Mega Man was just about",0
+		.db     "to leave, when he realized",0
+		.db     "that some good could still",0
+		.db     "come out of TI...",0
+		.db     "As a robot, Mega Man can",0
+		.db     "program and re-program",0
+		.db     "just about anything, and",0
+		.db     "TI was no exception...",0
+		.db     "he quickly ran over to the",0
+		.db     "lifeless robot and used",0
+		.db     "all of his skill to make",0
+		.db     "his enemy into his friend...",0
+		.db     "In a short time, Mega Man",0
+		.db     "proved his mastery in",0
+		.db     "re-programming, and TI",0
+		.db     "was reborn...",0
+		.db     "As they both left, Mega",0
+		.db     "Man knew that he would",0
+		.db     "never again have to face",0
+		.db     "Titanic Iniquity...",0
+		.db     "Often, TI would",0
+		.db     "ask his new friend",0
+		.db     "what his initials",0
+		.db     "stood for...",0
+		.db     "In response,",0
+		.db     "Mega Man",0
+		.db     "would always just",0
+		.db     "smile, and say...",0
+		.db     "'Thats Irrelevant.'",0
+		.db     "THE",0
+		.db     "END",0
+
+creditext:	    .db 46
+		.db     "Programming:",0
+		.db	  "Paul Marks (Port)",0
+		.db     "Dave Jaklitsch",0
+		.db	    " ",0
+		.db     "Graphics:",0
+		.db     "Dave Jaklitsch",0
+		.db     "Eddie Gallagher",0
+		.db	    " ",0
+		.db	  "Testers:",0
+		.db     "Matt Skrabanek",0
+
+		.db	  "Testers:",0
+		.db     "Matt Waters",0
+		.db     "Alex Sedeno",0
+		.db     "Andrew Ungvarsky",0
+		.db     "Dan Englender",0
+		.db     "Chad Whitman",0
+		.db     "Ian Kaplan",0
+		.db     "Ahmed El-Helw",0
+		.db     "Anthony Chan",0
+		.db     "Eric Chan",0
+
+		.db	  "Testers:",0
+		.db     "Matt Tandy",0
+		.db     "Dan Koester",0
+		.db     "Danny Welsh",0
+		.db     "Joe Farley",0
+		.db     "Chris Musolf",0
+		.db     "Stuart Bergstrom",0
+		.db     "Matt Senator",0
+		.db     "Fred Coughlin",0
+		.db     "Steven Gerstacker",0
+
+
+		.db	  "Testers:",0
+		.db     "Luke Rosenburg",0
+		.db	  " ",0
+		.db     "Special Thanks to:",0
+		.db     "Jimmy Mardell",0
+		.db     "Bill Nagel",0
+		.db     "Hideaki Omuro",0
+		.db     "Jeff Mears",0
+		.db     "Hannes Edfeldt",0
+		.db     "Joe Wingbermuehle",0
+
+
+		.db     "Special Thanks to:",0
+		.db     "The TI-Files",0
+		.db     "The #TI-Files Crew",0
+		.db     "Texas Instruments",0	
+		.db     "ZiLog",0
+		.db     "Capcom",0
+
+pres:  	.db     "Presented by:",0
+
+uprlft:
+.db %11111111
+.db %10000000
+.db %10000000
+.db %10000000
+.db %10000000
+.db %10000000
+.db %10000000
+.db %10000000
+
+uprrt:
+.db %11111111
+.db %00000001
+.db %00000001
+.db %00000001
+.db %00000001
+.db %00000001
+.db %00000001
+.db %00000001
+
+lwrlft:
+.db %10000000
+.db %10000000
+.db %10000000
+.db %10000000
+.db %10000000
+.db %10000000
+.db %10000000
+.db %11111111
+
+lwrrt:
+.db %00000001
+.db %00000001
+.db %00000001
+.db %00000001
+.db %00000001
+.db %00000001
+.db %00000001
+.db %11111111
+
+bint:
+.db %00000000
+.db %00000000
+.db %11111111
+.db %01010101
+.db %10101010
+.db %11111111
+.db %00000000
+.db %00000000
+
+pwcurs:
+.db %10000001
+.db %01011010
+.db %00100100
+.db %01000010
+.db %01000010
+.db %00100100
+.db %01011010
+.db %10000001
+
+pwdot:
+.db %00000000
+.db %00000000
+.db %00011000
+.db %00111100
+.db %00111100
+.db %00011000
+.db %00000000
+.db %00000000
+
+lvlspr:
+; 0=blank
+.db %00000000
+.db %00000000
+.db %00000000
+.db %00000000
+.db %00000000
+.db %00000000
+.db %00000000
+.db %00000000
+; 1=upper right
+.db %11111111
+.db %01000101
+.db %10001001
+.db %00010001
+.db %00100011
+.db %01000101
+.db %10001001
+.db %00010001
+; 2=block
+.db %00100010
+.db %01000100
+.db %10001000
+.db %00010001
+.db %00100010
+.db %01000100
+.db %10001000
+.db %00010001
+; 3=floor
+.db %11111111
+.db %01000100
+.db %10001000
+.db %00010001
+.db %00100010
+.db %01000100
+.db %10001000
+.db %00010001
+; 4=left side
+.db %10100010
+.db %11000100
+.db %10001000
+.db %10010001
+.db %10100010
+.db %11000100
+.db %10001000
+.db %10010001
+; 5=right side
+.db %00100011
+.db %01000101
+.db %10001001
+.db %00010001
+.db %00100011
+.db %01000101
+.db %10001001
+.db %00010001
+; 6=brick
+.db %11111111
+.db %10000001
+.db %10111101
+.db %10111101
+.db %10111101
+.db %10111101
+.db %10000001
+.db %11111111
+; 7=upper left
+.db %11111111
+.db %11000100
+.db %10001000
+.db %10010001
+.db %10100010
+.db %11000100
+.db %10001000
+.db %10010001
+; 7=T enemy
+tleft:
+.db %11111111
+.db %10011101
+.db %10101001
+.db %11101111
+.db %01000100
+.db %10110100
+.db %10000010
+.db %11111110
+
+tright:
+.db %11111111
+.db %10111001
+.db %10010101
+.db %11110111
+.db %00100010
+.db %00101101
+.db %01000001
+.db %01111111
+; 9=I enemy
+iup:
+.db %11111111
+.db %10011101
+.db %10101001
+.db %11100111
+.db %00110100
+.db %01100110
+.db %01000010
+.db %01111110
+
+idown:
+.db %01111110
+.db %01000010
+.db %01100110
+.db %00110100
+.db %11100111
+.db %10101001
+.db %10011101
+.db %11111111
+
+wpp:
+.db %00000000
+.db %00011000
+.db %00011000
+.db %00000000
+
+wpan:
+.db %00111100
+.db %00011000
+.db %01011010
+.db %00111100
+
+mmsr:
+.db %00011000
+.db %00100100
+.db %01011110
+.db %01101010
+.db %00100100
+.db %00011000
+.db %01100110
+.db %11100111
+.db %11011011
+.db %00111100
+.db %01011010
+.db %11100111
+
+mmrr:
+.db %00011000
+.db %00100100
+.db %01011110
+.db %01101010
+.db %00100100
+.db %00011000
+.db %11100110
+.db %11100110
+.db %00011000
+.db %11111100
+.db %11101010
+.db %00001110
+
+mmrr2:
+.db %00011000
+.db %00100100
+.db %01011110
+.db %01101010
+.db %00100100
+.db %00011000
+.db %01100100
+.db %01110100
+.db %00111000
+.db %00111100
+.db %01010100
+.db %01101100
+
+mmjr:
+.db %00011000
+.db %00100100
+.db %01011110
+.db %01101010
+.db %00100100
+.db %11011011
+.db %11100111
+.db %01100110
+.db %00111100
+.db %00111010
+.db %01011111
+.db %01100000
+
+mmwr:
+.db %00011000
+.db %00100100
+.db %01011110
+.db %01101010
+.db %00100100
+.db %00011000
+.db %01100111
+.db %11100111
+.db %11011000
+.db %00111100
+.db %01010100
+.db %11101110
+
+mmhr:
+.db %00110001
+.db %01011000
+.db %10111101
+.db %11100100
+.db %01001001
+.db %00110000
+.db %11001100
+.db %11100010
+.db %00010010
+.db %01101100
+.db %10010100
+.db %11101100
+
+mmsl:
+.db %00011000
+.db %00100100
+.db %01111010
+.db %01010110
+.db %00100100
+.db %00011000
+.db %01100110
+.db %11100111
+.db %11011011
+.db %00111100
+.db %01011010
+.db %11100111
+
+mmrl:
+.db %00011000
+.db %00100100
+.db %01111010
+.db %01010110
+.db %00100100
+.db %00011000
+.db %01100111
+.db %01100111
+.db %00011000
+.db %00111111
+.db %01010111
+.db %01110000
+
+mmrl2:
+.db %00011000
+.db %00100100
+.db %01111010
+.db %01010110
+.db %00100100
+.db %00011000
+.db %00100110
+.db %00101110
+.db %00011100
+.db %00111100
+.db %00101010
+.db %00110110
+
+mmjl:
+.db %00011000
+.db %00100100
+.db %01111010
+.db %01010110
+.db %00100100
+.db %11011011
+.db %11100111
+.db %01100110
+.db %00111100
+.db %01011100
+.db %11111010
+.db %00000110
+
+mmwl:
+.db %00011000
+.db %00100100
+.db %01111010
+.db %01010110
+.db %00100100
+.db %00011000
+.db %11100110
+.db %11100111
+.db %00011011
+.db %00111100
+.db %00101010
+.db %01110111
+
+mmhl:
+.db %10001100
+.db %00011010
+.db %10111101
+.db %00100111
+.db %10010010
+.db %00001100
+.db %00110011
+.db %01000111
+.db %01001000
+.db %00110110
+.db %00101001
+.db %00110111
+
+ansl:
+.db %00011000
+.db %00100100
+.db %00100100
+.db %00011000
+.db %01111110
+.db %00011000
+.db %10011001
+.db %01011010
+.db %00111100
+.db %00111100
+.db %01100110
+.db %11100111
+
+lvlan:
+ .db 1,2,2,2,2,2,2,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,7,3
+ .db 1,0,0,0,0,7,2,3
+ .db 1,0,0,0,7,2,2,3
+ .db 1,0,0,7,2,2,2,3
+ .db 1,0,0,3,2,2,2,3
+ .db 1,0,0,1,5,5,5,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,6,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,6,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,6,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,3,0,0,3
+ .db 1,0,0,0,3,0,0,3
+ .db 1,0,0,0,3,0,0,3
+ .db 1,0,0,0,3,0,0,0
+ .db 1,0,0,0,3,0,0,0
+ .db 1,0,0,0,3,0,0,3
+ .db 1,0,0,0,3,0,0,3
+ .db 1,0,0,0,3,0,0,3
+ .db 1,0,0,0,3,0,0,3
+ .db 1,0,0,0,3,0,0,3
+ .db 1,0,0,0,3,0,0,3
+ .db 1,0,0,7,3,0,0,3
+ .db 1,0,0,0,3,0,0,3
+ .db 1,0,0,0,3,0,0,3
+ .db 1,0,0,0,3,0,0,3
+ .db 1,0,0,0,3,0,6,3
+ .db 1,0,0,0,0,0,0,0
+ .db 1,0,0,0,0,0,0,0
+ .db 1,0,0,0,3,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,3,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,3,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,9,0,3
+ .db 1,0,0,3,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,3,3
+ .db 1,0,0,0,0,3,3,3
+ .db 1,0,0,0,3,3,3,3
+ .db 1,0,0,0,0,0,0,0
+ .db 1,0,0,0,0,0,0,0
+ .db 1,0,0,0,0,3,3,3
+ .db 1,0,0,0,0,0,0,0
+ .db 1,0,0,0,0,0,0,0
+ .db 1,0,0,0,0,0,3,3
+ .db 1,0,0,0,0,0,0,0
+ .db 1,0,0,0,0,0,0,0
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,9
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,0
+ .db 1,0,0,0,0,0,0,0
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,0
+ .db 1,0,0,0,0,0,3,0
+ .db 1,0,0,0,0,0,0,0
+ .db 1,0,0,0,0,3,0,0
+ .db 1,0,0,0,0,0,0,3
+ .db 2,1,1,1,0,0,0,3
+ .db 2,2,2,1,0,0,0,3
+ .db 2,1,1,1,4,4,4,3
+
+
+lvlb1:
+ .db 1,1,1,1,4,4,4,3
+ .db 1,1,1,1,0,0,0,3
+ .db 1,1,1,1,0,0,0,3
+ .db 1,1,1,1,0,0,0,3
+ .db 1,1,1,1,0,0,0,3
+ .db 1,1,1,1,0,0,0,3
+ .db 1,1,1,1,0,0,0,3
+ .db 1,1,1,1,0,0,0,3
+ .db 1,1,1,1,0,0,0,3
+ .db 1,1,1,1,0,0,0,3
+ .db 1,1,1,1,0,0,0,3
+ .db 1,1,1,1,4,4,4,3
+
+lvlb2:
+ .db 1,1,1,1,4,4,4,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,0,0,0,0,0,0,3
+ .db 1,1,1,1,1,1,1,3
+
+.end
